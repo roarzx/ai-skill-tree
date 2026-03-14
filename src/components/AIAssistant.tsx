@@ -81,12 +81,21 @@ export default function AIAssistant() {
     setInput('');
     setIsLoading(true);
 
+    // 创建临时消息用于流式更新
+    const tempMessageId = (Date.now() + 1).toString();
+    const tempMessage: Message = {
+      id: tempMessageId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, tempMessage]);
+
     try {
       // 构建上下文
       const contextInfo = getContextInfo();
-      const fullPrompt = `${SYSTEM_PROMPT}\n\n${contextInfo}\n\n用户问题: ${userMessage.content}`;
 
-      // 使用兼容的 AI SDK 调用
+      // 使用流式 API 调用
       const response = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -103,28 +112,52 @@ export default function AIAssistant() {
         throw new Error('API request failed');
       }
 
-      const data = await response.json();
-      
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.content || '抱歉，我暂时无法回答这个问题。',
-        timestamp: new Date().toISOString(),
-      };
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      if (!reader) {
+        throw new Error('No response stream');
+      }
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.content) {
+                fullContent += data.content;
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === tempMessageId
+                      ? { ...msg, content: fullContent }
+                      : msg
+                  )
+                );
+              }
+            } catch (e) {
+              // 忽略解析错误
+            }
+          }
+        }
+      }
     } catch (error) {
       console.error('AI chat error:', error);
       
-      // Fallback response
-      const fallbackMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: getFallbackResponse(input),
-        timestamp: new Date().toISOString(),
-      };
-      
-      setMessages((prev) => [...prev, fallbackMessage]);
+      // 更新临时消息为失败内容
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === tempMessageId
+            ? { ...msg, content: getFallbackResponse(input) }
+            : msg
+        )
+      );
     } finally {
       setIsLoading(false);
     }
