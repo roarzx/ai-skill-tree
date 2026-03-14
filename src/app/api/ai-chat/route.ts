@@ -1,47 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Note: In production, you would configure this with your AI provider
-// Options: OpenAI, Anthropic, Google Gemini, etc.
+// MiniMax API 配置
+const MINIMAX_API_URL = 'https://api.minimax.chat/v1/text/chatcompletion_pro';
+const MINIMAX_MODEL = 'MiniMax-M2.5';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { messages } = body;
 
-    // Check for API key - you can configure this in production
-    const apiKey = process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY;
+    // 优先使用用户提供的 MiniMax API Key
+    const apiKey = process.env.MINIMAX_API_KEY || 'sk-cp-B-JycTrXj_f7kGCcqHvsnqN7V9QP2OJJ1IDQ51fLciMH7kNNB4ekOGBZ7BuoiDBx6Xww9cQ6LbSU_tShLLtPN3ehjKyn288ArPMO7QNVD2C-eCJXU5FbprY';
     
     if (!apiKey) {
-      // Return a mock response when no API key is configured
       return NextResponse.json({
-        content: `AI 功能需要配置 API Key 才能正常工作。\n\n请设置以下环境变量之一：\n- OPENAI_API_KEY\n- ANTHROPIC_API_KEY\n\n或者使用内置的离线回复功能。`,
+        content: `AI 功能需要配置 API Key 才能正常工作。`,
       });
     }
 
-    // Example OpenAI API call (uncomment and configure in production):
-    /*
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // 转换消息格式给 MiniMax
+    const minimaxMessages = messages.map((msg: { role: string; content: string }) => ({
+      role: msg.role === 'assistant' ? 'assistant' : 'user',
+      content: msg.content,
+    }));
+
+    const response = await fetch(MINIMAX_API_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
-        messages: messages,
+        model: MINIMAX_MODEL,
+        messages: minimaxMessages,
         temperature: 0.7,
+        max_tokens: 4096,
       }),
     });
 
-    const data = await response.json();
-    return NextResponse.json({
-      content: data.choices?.[0]?.message?.content || 'No response',
-    });
-    */
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('MiniMax API error:', error);
+      return NextResponse.json({
+        content: `API 请求失败: ${response.status}`,
+      });
+    }
 
-    // Default fallback
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || '抱歉，我暂时无法回答这个问题。';
+    
     return NextResponse.json({
-      content: 'AI 功能已就绪！请配置 API Key 以获得更好的体验。',
+      content,
     });
 
   } catch (error) {

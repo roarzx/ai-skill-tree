@@ -83,8 +83,8 @@ function buildTreeNodes(skills: Skill[], searchQuery: string = ''): { nodes: Nod
     groupedByLevel[level].push(skill);
   });
 
-  const xOffset = 250;
-  const yOffset = 140;
+  const xOffset = 200;
+  const yOffset = 120;
 
   Object.entries(groupedByLevel).forEach(([level, skillsAtLevel]) => {
     const levelNum = parseInt(level);
@@ -158,8 +158,12 @@ function SkillTreeInner({ searchQuery = '' }: { searchQuery?: string }) {
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       fitView
+      fitViewOnInit
+      fitViewOptions={{ padding: 0.2 }}
       attributionPosition="bottom-left"
       proOptions={{ hideAttribution: true }}
+      minZoom={0.5}
+      maxZoom={2}
     >
       <Background color="#1e293b" gap={30} size={1} />
       <Controls
