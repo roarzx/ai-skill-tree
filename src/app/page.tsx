@@ -191,7 +191,11 @@ export default function Home() {
                 </span>
               )}
             </div>
-            {viewMode === '2d' ? <SkillTree searchQuery={searchQuery} /> : <SkillTree3D />}
+            {viewMode === '2d' ? (
+              <div className="w-full h-[750px] rounded-2xl overflow-hidden">
+                <SkillTree searchQuery={searchQuery} />
+              </div>
+            ) : <SkillTree3D />}
           </section>
         </div>
       </div>
