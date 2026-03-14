@@ -158,7 +158,6 @@ function SkillTreeInner({ searchQuery = '' }: { searchQuery?: string }) {
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       fitView
-      fitViewOnInit
       fitViewOptions={{ padding: 0.3 }}
       attributionPosition="bottom-left"
       proOptions={{ hideAttribution: true }}
