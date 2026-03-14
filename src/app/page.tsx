@@ -14,7 +14,7 @@ import { useStore } from '@/lib/store';
 const SkillTree3D = dynamic(() => import('@/components/SkillTree3D'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[650px] rounded-2xl flex items-center justify-center relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0a1225 0%, #050810 100%)' }}>
+    <div className="w-full h-[750px] rounded-2xl flex items-center justify-center relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0a1225 0%, #050810 100%)' }}>
       <div className="absolute inset-0" style={{
         backgroundImage: 'radial-gradient(circle at 20% 30%, rgba(245,166,35,0.1) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(34,211,238,0.08) 0%, transparent 40%)'
       }} />
